@@ -1,17 +1,17 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
+
 
 const ddbDocClient = createDDbDocClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // Note change
   try {
     console.log("Event: ", event);
-    // const parameters = event?.queryStringParameters;
-    // const movieId = parameters ? parseInt(parameters.movieId) : undefined;
     const parameters  = event?.pathParameters;
     const movieId = parameters?.movieId ? parseInt(parameters.movieId) : undefined;
+
 
     if (!movieId) {
       return {
@@ -23,6 +23,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
       };
     }
 
+    const queryParams = event.queryStringParameters;
+    const includeCast = queryParams && queryParams.cast === "true";
+  
+
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
@@ -30,6 +34,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
       })
     );
     console.log("GetCommand response: ", commandOutput);
+
     if (!commandOutput.Item) {
       return {
         statusCode: 404,
@@ -39,10 +44,26 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
         body: JSON.stringify({ Message: "Invalid movie Id" }),
       };
     }
+
     const body = {
       data: commandOutput.Item,
     };
 
+    if (includeCast) {
+      const castParams: QueryCommandInput = {
+        TableName: "MovieCast",
+        KeyConditionExpression: "movieId = :m",
+        ExpressionAttributeValues: {
+          ":m": movieId,
+        },
+      };
+
+      const castResult = await ddbDocClient.send(new QueryCommand(castParams));
+      body["cast"] = castResult.Items;
+    }
+  
+
+ 
     // Return Response
     return {
       statusCode: 200,
