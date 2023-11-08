@@ -8,7 +8,7 @@ import * as apig from "aws-cdk-lib/aws-apigateway";
 
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { generateBatch } from "../shared/util";
-import { movies, movieCasts } from "../seed/movies";
+import { movies, movieCasts, reviews } from "../seed/movies";
 
 export class RestAPIStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -25,7 +25,7 @@ export class RestAPIStack extends cdk.Stack {
     const reviewsTable = new dynamodb.Table(this, "reviewsTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-      // sortKey: { name: "reviewId", type: dynamodb.AttributeType.STRING},
+      sortKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING},
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "Reviews",
     });
@@ -84,15 +84,18 @@ export class RestAPIStack extends cdk.Stack {
             parameters: {
               RequestItems: {
                 [moviesTable.tableName]: generateBatch(movies),
-                [movieCastsTable.tableName]: generateBatch(movieCasts),  // Added
+                [reviewsTable.tableName]: generateBatch(reviews),
+                [movieCastsTable.tableName]: generateBatch(movieCasts),
               },
             },
             physicalResourceId: custom.PhysicalResourceId.of("moviesddbInitData"), //.of(Date.now().toString()),
           },
           policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [moviesTable.tableArn, movieCastsTable.tableArn],  // Includes movie cast
+            resources: [moviesTable.tableArn, movieCastsTable.tableArn, reviewsTable.tableArn],  
           }),
         });
+
+        
         
         const newMovieFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
           architecture: lambda.Architecture.ARM_64,
