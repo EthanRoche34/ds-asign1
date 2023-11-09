@@ -25,10 +25,18 @@ export class RestAPIStack extends cdk.Stack {
     const reviewsTable = new dynamodb.Table(this, "reviewsTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-      sortKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING},
+      sortKey: { name: "date", type: dynamodb.AttributeType.STRING},
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "Reviews",
     });
+
+    //Testing for get reviews by reviewer
+    reviewsTable.addGlobalSecondaryIndex({
+      indexName: "ReviewerIndex",
+      partitionKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "date", type: dynamodb.AttributeType.STRING },
+    })
+    
 
     const movieCastsTable = new dynamodb.Table(this, "MovieCastTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -232,6 +240,11 @@ export class RestAPIStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
 
-      }
+    const reviewerEndpoint = reviewEndpoint.addResource("{reviewerName}")
+    reviewerEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
+  
     }
+  }
     

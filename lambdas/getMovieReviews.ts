@@ -8,6 +8,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", event);
     const movieId = parseInt(event.pathParameters?.movieId!);
+    const minRating = parseInt(event.queryStringParameters?.minRating!)
+    const reviewerName = (event.pathParameters?.reviewerName!);
 
     if (!movieId) {
       return {
@@ -19,13 +21,47 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
       };
     }
 
-    const commandInput: QueryCommandInput = {
-      TableName: process.env.TABLE_NAME,
-      KeyConditionExpression: "movieId = :m",
-      ExpressionAttributeValues: {
-        ":m": movieId,
-      },
+    // const commandInput: QueryCommandInput = {
+    //   TableName: process.env.TABLE_NAME,
+    //   KeyConditionExpression: "movieId = :m",
+    // //   FilterExpression: "rating >= :r",
+    //   ExpressionAttributeValues: {
+    //     ":m": movieId,
+    //     // ":r": minRating,
+    //   },
+    // };
+
+    let commandInput: QueryCommandInput = {
+        TableName: process.env.TABLE_NAME
     };
+    if ("minRating") {
+        commandInput = {
+            ...commandInput,
+            KeyConditionExpression: "movieId = :m",
+            FilterExpression: "rating >= :r",
+            ExpressionAttributeValues: {
+                ":m": movieId,
+                ":r": minRating,
+            }
+        }
+    } else if (reviewerName) {
+        commandInput = {
+            ...commandInput,
+            KeyConditionExpression: "movieId = :m and begins_with(reviewerName, :r",
+            ExpressionAttributeValues: {
+                ":m": movieId,
+                ":r": reviewerName,
+            },
+        };
+    } else {
+        commandInput = {
+            ...commandInput,
+            KeyConditionExpression: "movieId = :m",
+            ExpressionAttributeValues: {
+                ":m": movieId
+            }
+        }
+    }
 
     const commandOutput = await ddbDocClient.send(
       new QueryCommand(commandInput)
@@ -37,7 +73,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "No reviews found for this movie" }),
+        body: JSON.stringify({ Message: "No reviews found" }),
       };
     }
 
