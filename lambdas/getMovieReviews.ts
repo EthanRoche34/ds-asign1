@@ -10,6 +10,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const movieId = parseInt(event.pathParameters?.movieId!);
     const minRating = parseInt(event.queryStringParameters?.minRating!)
     const reviewerName = (event.pathParameters?.reviewerName!);
+    const date = (event.pathParameters?.date!);
 
     if (!movieId) {
       return {
@@ -34,7 +35,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     let commandInput: QueryCommandInput = {
         TableName: process.env.TABLE_NAME
     };
-    if ("minRating") {
+    if (minRating) {
         commandInput = {
             ...commandInput,
             KeyConditionExpression: "movieId = :m",
@@ -47,10 +48,19 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     } else if (reviewerName) {
         commandInput = {
             ...commandInput,
-            KeyConditionExpression: "movieId = :m and begins_with(reviewerName, :r",
+            KeyConditionExpression: "movieId = :m and begins_with(reviewerName, :r)",
             ExpressionAttributeValues: {
                 ":m": movieId,
                 ":r": reviewerName,
+            },
+        };
+    } else if (date) {
+        commandInput = {
+            ...commandInput,
+            KeyConditionExpression: "movieId = :m and begins_with(date, :d)",
+            ExpressionAttributeValues: {
+                ":m": movieId,
+                ":d": date,
             },
         };
     } else {

@@ -25,7 +25,7 @@ export class RestAPIStack extends cdk.Stack {
     const reviewsTable = new dynamodb.Table(this, "reviewsTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-      sortKey: { name: "date", type: dynamodb.AttributeType.STRING},
+      sortKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING},
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "Reviews",
     });
@@ -245,6 +245,11 @@ export class RestAPIStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
   
+    // const yearEndpoint = reviewEndpoint.addResource("{date}")
+    // yearEndpoint.addMethod(
+    //   "GET",
+    //   new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
+    
     }
   }
     

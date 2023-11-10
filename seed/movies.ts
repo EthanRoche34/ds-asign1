@@ -92,6 +92,13 @@ export const reviews: Review[] = [
   },
   {
     movieId: 1234,
+    reviewerName: "Tester",
+    rating: 4,
+    date: "2022-05-01",
+    comment: "Interesting!",
+  },
+  {
+    movieId: 1234,
     reviewerName: "Jane Smith",
     rating: 5,
     date: "2022-01-02",
