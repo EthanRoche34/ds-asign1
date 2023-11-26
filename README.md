@@ -19,17 +19,4 @@ This repository contains the implementation of a serverless REST API for the AWS
 
 ![](./images/api1.png)
 
-![](./images/api1.png)
-
-### Authentication..
-
-[Include a screenshot from the AWS console (Cognito User Pools) showing a confirmed user account.]
-
-![](./images/pool.png)
-
-### Independent learning (If relevant).
-
-[ Briefly explain any aspects of your submission that required independent research and learning, i.e. not covered in the lectures/labs. State the files that have evidence of this.
-
-
-State any other evidence of independent learning achieved while completing this assignment.
+![](./images/api2.png)
