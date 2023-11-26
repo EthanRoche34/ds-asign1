@@ -26,22 +26,36 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
    }
 
    if (!isValidBodyParams(body)) {
-       return {
-         statusCode: 500,
-         headers: {
-           "content-type": "application/json",
-         },
-         body: JSON.stringify({
-           message: `Incorrect type. Must match Review schema`,
-           schema: schema.definitions["Review"],
-         }),
-       };
-     }
-     
+     return {
+       statusCode: 500,
+       headers: {
+         "content-type": "application/json",
+       },
+       body: JSON.stringify({
+         message: `Incorrect type. Must match Review schema`,
+         schema: schema.definitions["Review"],
+       }),
+     };
+   }
+
+   // Extract movieId and reviewerName from path parameters
+   const movieId = parseInt(event.pathParameters?.movieId!);
+   const reviewerName = event.pathParameters?.reviewerName!;
+
+   if (!movieId || !reviewerName) {
+     return {
+       statusCode: 500,
+       headers: {
+         "content-type": "application/json",
+       },
+       body: JSON.stringify({ message: "Missing movieId or reviewerName" }),
+     };
+   }
+
    const commandOutput = await ddbDocClient.send(
      new UpdateCommand({
        TableName: process.env.TABLE_NAME,
-       Key: { movieId: body.movieId, reviewerName: body.reviewerName },
+       Key: { movieId, reviewerName },
        UpdateExpression: "SET #commentAttr = :commentValue",
        ExpressionAttributeNames: {
          "#commentAttr": "comment",
@@ -51,6 +65,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
        },
      })
    );
+
    return {
      statusCode: 200,
      headers: {

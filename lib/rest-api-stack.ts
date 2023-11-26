@@ -116,6 +116,19 @@ export class RestAPIStack extends cdk.Stack {
           },
         });
 
+        const updateReviewFn = new lambdanode.NodejsFunction(this, "UpdateReviewFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_16_X,
+          entry: `${__dirname}/../lambdas/updateReview.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: reviewsTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
+
+
 
         const deleteMovieFn = new lambdanode.NodejsFunction(this, "DeleteMovieFn", {
           architecture: lambda.Architecture.ARM_64,
@@ -220,6 +233,7 @@ export class RestAPIStack extends cdk.Stack {
         reviewsTable.grantReadData(getMovieReviewsFn)
         reviewsTable.grantReadData(getReviewerReviewsFn)
         reviewsTable.grantReadData(getReviewsFn)
+        reviewsTable.grantReadWriteData(updateReviewFn)
 
             // REST API 
     const api = new apig.RestApi(this, "RestAPI", {
@@ -285,6 +299,11 @@ export class RestAPIStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
   
+    reviewerEndpoint.addMethod(
+      "PUT",
+      new apig.LambdaIntegration(updateReviewFn, { proxy: true})
+    )
+    
     // const yearEndpoint = reviewEndpoint.addResource("{date}")
     // yearEndpoint.addMethod(
     //   "GET",
