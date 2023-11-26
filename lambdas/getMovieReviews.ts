@@ -1,8 +1,10 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand, QueryCommandInput } from "@aws-sdk/lib-dynamodb";
+import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate";
 
 const ddbDocClient = createDocumentClient();
+const translateClient = new TranslateClient({ region: process.env.REGION });
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
@@ -10,9 +12,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     const movieId = parseInt(event.pathParameters?.movieId!);
     const minRating = parseInt(event.queryStringParameters?.minRating!)
     const reviewerNameOrYear = event.pathParameters?.reviewerName!;
-    const reviewerName = event.pathParameters?.reviewerName!;
-
-
+    const languageCode = event.queryStringParameters?.language!;
 
     if (!movieId) {
       return {
@@ -37,7 +37,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     let commandInput: QueryCommandInput = {
         TableName: process.env.TABLE_NAME
     };
-    if (movieId) {
     if (minRating) {
         commandInput = {
             ...commandInput,
@@ -78,7 +77,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
             ":m": movieId
         }
     }
-    }
   }
 
     const commandOutput = await ddbDocClient.send(
@@ -93,6 +91,18 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
         body: JSON.stringify({ Message: "No reviews found" }),
       };
+    }
+
+    if (languageCode) {
+      const review = commandOutput.Items[0];
+      const translateCommand = new TranslateTextCommand({
+        Text: review.comment,
+        SourceLanguageCode: "en",
+        TargetLanguageCode: languageCode,
+      });
+
+      const translateOutput = await translateClient.send(translateCommand);
+      review.comment = translateOutput.TranslatedText;
     }
 
     return {

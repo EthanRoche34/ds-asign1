@@ -303,6 +303,12 @@ export class RestAPIStack extends cdk.Stack {
       "PUT",
       new apig.LambdaIntegration(updateReviewFn, { proxy: true})
     )
+
+    const translateEndpoint = reviewerEndpoint.addResource("translation")
+    translateEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true})
+    )
     
     // const yearEndpoint = reviewEndpoint.addResource("{date}")
     // yearEndpoint.addMethod(
