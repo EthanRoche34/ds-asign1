@@ -7,32 +7,44 @@ const ddbDocClient = createDocumentClient();
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("Event: ", event);
-    const movieId = parseInt(event.pathParameters?.movieId!);
-    const date = (event.pathParameters?.date!);
+    const reviewerName = event.pathParameters?.reviewerName!;
+    console.log(reviewerName)
 
-    if (!movieId) {
+
+    if (!reviewerName) {
       return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Missing movie Id" }),
+        body: JSON.stringify({ Message: "Missing reviewer" }),
       };
     }
 
+    // const commandInput: QueryCommandInput = {
+    //   TableName: process.env.TABLE_NAME,
+    //   KeyConditionExpression: "movieId = :m",
+    // //   FilterExpression: "rating >= :r",
+    //   ExpressionAttributeValues: {
+    //     ":m": movieId,
+    //     // ":r": minRating,
+    //   },
+    // };
+
     let commandInput: QueryCommandInput = {
-        TableName: process.env.TABLE_NAME
-    };
-        commandInput = {
-            ...commandInput,
-            KeyConditionExpression: "movieId = :m",
-            ExpressionAttributeValues: {
-                ":m": movieId
-            }
-        }
+        TableName: process.env.TABLE_NAME,
+        IndexName: "ReviewerIndex",
+        KeyConditionExpression: "reviewerName = :r",
+        ExpressionAttributeValues: {
+          ":r": reviewerName,
+        },
+      };
+       
 
-
+    console.log(commandInput)
+    
     const commandOutput = await ddbDocClient.send(
+
       new QueryCommand(commandInput)
     );
 

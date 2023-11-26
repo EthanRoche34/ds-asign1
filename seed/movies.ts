@@ -85,7 +85,7 @@ export const movieCasts: MovieCast[] = [
 export const reviews: Review[] = [
   {
     movieId: 1234,
-    reviewerName: "John Doe",
+    reviewerName: "John",
     rating: 4,
     reviewDate: "2023-01-01",
     comment: "Great movie!",
@@ -99,28 +99,28 @@ export const reviews: Review[] = [
   },
   {
     movieId: 1234,
-    reviewerName: "Jane Smith",
+    reviewerName: "Jane",
     rating: 5,
     reviewDate: "2021-01-02",
     comment: "Loved it!",
   },
   {
     movieId: 4567,
-    reviewerName: "John Doe",
+    reviewerName: "John",
     rating: 3,
     reviewDate: "2022-01-03",
     comment: "Interesting plot.",
   },
   {
     movieId: 2345,
-    reviewerName: "Jane Smith",
+    reviewerName: "Jane",
     rating: 4,
     reviewDate: "2022-01-04",
     comment: "Good performances.",
   },
   {
     movieId: 3456,
-    reviewerName: "John Doe",
+    reviewerName: "John",
     rating: 5,
     reviewDate: "2022-01-05",
     comment: "Best movie of the year!",

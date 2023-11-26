@@ -30,11 +30,11 @@ export class RestAPIStack extends cdk.Stack {
       tableName: "Reviews",
     });
 
-    //Testing for get reviews by reviewer
-    reviewsTable.addLocalSecondaryIndex({
+    reviewsTable.addGlobalSecondaryIndex({
       indexName: "ReviewerIndex",
-      sortKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
-    })
+      partitionKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
+    });
     
 
     const movieCastsTable = new dynamodb.Table(this, "MovieCastTable", {
@@ -177,6 +177,22 @@ export class RestAPIStack extends cdk.Stack {
           }
         );
 
+        const getReviewerReviewsFn = new lambdanode.NodejsFunction(
+          this,
+          "GetReviewerReviewsFn",
+          {
+            architecture: lambda.Architecture.ARM_64,
+            runtime: lambda.Runtime.NODEJS_16_X,
+            entry: `${__dirname}/../lambdas/getReviewerReviews.ts`,
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            environment: {
+              TABLE_NAME: reviewsTable.tableName,
+              REGION: "eu-west-1",
+            },
+          }
+        );
+
         const newReviewFn = new lambdanode.NodejsFunction(this, "AddReviewFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
@@ -194,12 +210,15 @@ export class RestAPIStack extends cdk.Stack {
         moviesTable.grantReadData(getAllMoviesFn)
         moviesTable.grantReadWriteData(newMovieFn)
         moviesTable.grantReadWriteData(deleteMovieFn);
+        moviesTable.grantReadData(getMovieReviewsFn)
+        moviesTable.grantReadData(getReviewerReviewsFn)
 
         movieCastsTable.grantReadData(getMovieByIdFn)
         movieCastsTable.grantReadData(getMovieCastMembersFn);
 
         reviewsTable.grantReadWriteData(newReviewFn)
         reviewsTable.grantReadData(getMovieReviewsFn)
+        reviewsTable.grantReadData(getReviewerReviewsFn)
         reviewsTable.grantReadData(getReviewsFn)
 
             // REST API 
@@ -256,6 +275,11 @@ export class RestAPIStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
 
+    const reviewerNameEndpoint = reviewsEndpoint.addResource("{reviewerName}")
+    reviewerNameEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getReviewerReviewsFn, { proxy: true }));
+
     const reviewerEndpoint = reviewEndpoint.addResource("{reviewerName}")
     reviewerEndpoint.addMethod(
       "GET",
@@ -265,7 +289,7 @@ export class RestAPIStack extends cdk.Stack {
     // yearEndpoint.addMethod(
     //   "GET",
     //   new apig.LambdaIntegration(getReviewsFn, { proxy: true }));
-    
+
     }
   }
     
