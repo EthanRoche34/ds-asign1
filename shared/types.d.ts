@@ -29,7 +29,7 @@ export type Movie = {
     movieId: number;
     reviewerName: string;
     rating: number;
-    date: string;
+    reviewDate: string;
     comment: string;
   }
 

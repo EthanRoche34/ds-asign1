@@ -9,8 +9,8 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     console.log("Event: ", event);
     const movieId = parseInt(event.pathParameters?.movieId!);
     const minRating = parseInt(event.queryStringParameters?.minRating!)
-    const reviewerNameOrYear = event.pathParameters?.reviewerName!;
-
+    const reviewerName = (event.pathParameters?.reviewerName!);
+    const date = (event.pathParameters?.date!);
 
     if (!movieId) {
       return {
@@ -35,38 +35,15 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     let commandInput: QueryCommandInput = {
         TableName: process.env.TABLE_NAME
     };
-    if (minRating) {
+    if (date) {
         commandInput = {
             ...commandInput,
-            KeyConditionExpression: "movieId = :m",
-            FilterExpression: "rating >= :r",
+            KeyConditionExpression: "movieId = :m and begins_with(date, :d)",
             ExpressionAttributeValues: {
                 ":m": movieId,
-                ":r": minRating,
-            }
-        }
-    } else if (reviewerNameOrYear) {
-      const yearRegex = /^\d{4}$/;
-        if (yearRegex.test(reviewerNameOrYear)) {
-          commandInput = {
-            ...commandInput,
-            KeyConditionExpression: "movieId = :m",
-            FilterExpression: "begins_with(reviewDate, :d)",
-            ExpressionAttributeValues: {
-                ":m": movieId,
-                ":d": reviewerNameOrYear, // Use this as the year for begins_with function
+                ":d": date,
             },
         };
-       } else {
-          commandInput = {
-            ...commandInput,
-            KeyConditionExpression: "movieId = :m and begins_with(reviewerName, :r)",
-            ExpressionAttributeValues: {
-                ":m": movieId,
-                ":r": reviewerNameOrYear,
-            },
-          }
-        }
     } else {
         commandInput = {
             ...commandInput,

@@ -31,10 +31,9 @@ export class RestAPIStack extends cdk.Stack {
     });
 
     //Testing for get reviews by reviewer
-    reviewsTable.addGlobalSecondaryIndex({
+    reviewsTable.addLocalSecondaryIndex({
       indexName: "ReviewerIndex",
-      partitionKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
-      sortKey: { name: "date", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "reviewerName", type: dynamodb.AttributeType.STRING },
     })
     
 
@@ -162,6 +161,22 @@ export class RestAPIStack extends cdk.Stack {
           }
         );
 
+        const getReviewsFn = new lambdanode.NodejsFunction(
+          this,
+          "GetReviewsFn",
+          {
+            architecture: lambda.Architecture.ARM_64,
+            runtime: lambda.Runtime.NODEJS_16_X,
+            entry: `${__dirname}/../lambdas/getReviews.ts`,
+            timeout: cdk.Duration.seconds(10),
+            memorySize: 128,
+            environment: {
+              TABLE_NAME: reviewsTable.tableName,
+              REGION: "eu-west-1",
+            },
+          }
+        );
+
         const newReviewFn = new lambdanode.NodejsFunction(this, "AddReviewFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_16_X,
@@ -185,6 +200,7 @@ export class RestAPIStack extends cdk.Stack {
 
         reviewsTable.grantReadWriteData(newReviewFn)
         reviewsTable.grantReadData(getMovieReviewsFn)
+        reviewsTable.grantReadData(getReviewsFn)
 
             // REST API 
     const api = new apig.RestApi(this, "RestAPI", {
@@ -248,7 +264,7 @@ export class RestAPIStack extends cdk.Stack {
     // const yearEndpoint = reviewEndpoint.addResource("{date}")
     // yearEndpoint.addMethod(
     //   "GET",
-    //   new apig.LambdaIntegration(getMovieReviewsFn, { proxy: true }));
+    //   new apig.LambdaIntegration(getReviewsFn, { proxy: true }));
     
     }
   }
